@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:donor_mate/donor_details_screen.dart';
+import 'package:donor_mate/models/blood_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'home_page.dart';
@@ -22,9 +23,9 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
   // Filter variables
   String _selectedBloodGroup = 'All';
   String _location = '';
-  String _latitude = "12.916916480034176";
-  String _longitude = "77.6352539062589";
-  double _distanceRange = 5.0; // Default 5km
+  String _latitude = "12.901836572567824";
+  String _longitude = "77.55847677976726";
+  double _distanceRange = 10.0; // Default 5km
   final List<String> _bloodGroups = [
     'All',
     'A+',
@@ -43,34 +44,28 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
     _loadUserData();
   }
 
-    Future<void> _loadUserData() async {
-
-    
+  Future<void> _loadUserData() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userData = prefs.getString('userData');
       print(userData);
 
-
       if (userData != null) {
-        
         Map<String, dynamic> user = jsonDecode(userData);
         print(user);
 
         setState(() {
           _selectedBloodGroup = user['bloodGroup'] ?? "A+";
           _location = user['address'] ?? "Electronic City, Bangalore, India";
-          _latitude = user['latitude'] ?? "12.916916480034176";
-          _longitude = user['longitude'] ?? "77.6352539062589";
+          _latitude = user['latitude'] ?? "12.901836572567824";
+          _longitude = user['longitude'] ?? "77.55847677976726";
         });
       }
-      
     } catch (e) {
       print("Error loading user data: $e");
-    } 
-    finally {
+    } finally {
       fetchDonors(
-        bloodGroup: _selectedBloodGroup == 'All' ? null : _selectedBloodGroup,
+        bloodGroup: _selectedBloodGroup,
         distance: _distanceRange,
         lat: _latitude,
         lng: _longitude,
@@ -78,27 +73,32 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
     }
   }
 
-  Future<void> fetchDonors({String? bloodGroup, double? distance = 5.0, String? lat, String? lng}) async {
+  Future<void> fetchDonors(
+      {String? bloodGroup,
+      double? distance = 10.0,
+      String? lat,
+      String? lng}) async {
     setState(() => _isLoading = true);
     try {
       // Base URL
       String url =
           'https://blood-donation-backend-082i.onrender.com/api/home/default-donors';
 
-      // Add query parameters if filters are applied
-      if (bloodGroup != null && bloodGroup != 'All') {
-        url += '?bloodGroup=$bloodGroup';
-        if (distance != null) {
-          url += '&distance=$distance';
-        }
-      } else if (distance != null) {
-        url += '?distance=$distance';
-      }
-      if (lat != null && lng != null) {
-        url += '?lat=$lat&lng=$lng';
-      }
+      final Map<String, dynamic> body = {
+        if (bloodGroup != null && bloodGroup != "All") "bloodGroup": bloodGroup,
+        if (distance != null) "distance": distance,
+        if (lat != null) "lat": lat,
+        if (lng != null) "lng": lng,
+      };
 
-      final response = await http.get(Uri.parse(url));
+      print("Request Body: $body");
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(body),
+      );
+
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         print(jsonData);
@@ -130,12 +130,13 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
     });
   }
 
-  // Apply filters and fetch new data
   void _applyFilters() {
     Navigator.pop(context); // Close the drawer
     fetchDonors(
-      bloodGroup: _selectedBloodGroup == 'All' ? null : _selectedBloodGroup,
+      bloodGroup: _selectedBloodGroup,
       distance: _distanceRange,
+      lat: _latitude,
+      lng: _longitude,
     );
   }
 
@@ -156,8 +157,11 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
           },
         ),
         elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white), // 👈 makes end drawer icon red
+
       ),
       endDrawer: _buildFilterDrawer(),
+      
       body: Column(
         children: [
           // Search bar with filter icon
@@ -204,13 +208,14 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
 
           // Donors list
           _isLoading
-              ? const Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.red,
-                      backgroundColor: Colors.black12,
-                    ),
-                  ),
+              ? BloodDonorSearchLoader(
+                  bloodGroup: "", // Replace with your selected blood group
+                  duration:
+                      const Duration(seconds: 1), // 2 seconds as requested
+                  onComplete: () {
+                    // Handle completion, perhaps navigate to results page
+                    // or update UI to show donor results
+                  },
                 )
               : Expanded(
                   child: _filteredDonors.isEmpty
@@ -237,7 +242,10 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              DonorDetailsPage(donor: donor,lat: _latitude,long: _longitude),
+                                              DonorDetailsPage(
+                                                  donor: donor,
+                                                  lat: _latitude,
+                                                  long: _longitude),
                                         ),
                                       );
                                     },
@@ -477,8 +485,8 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
               Slider(
                 value: _distanceRange,
                 min: 1,
-                max: 20,
-                divisions: 19,
+                max: 50,
+                divisions: 49,
                 activeColor: const Color(0xFFD32F2F),
                 inactiveColor: Colors.red.shade100,
                 label: '${_distanceRange.toInt()} km',

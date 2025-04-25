@@ -22,13 +22,13 @@ class _ProfilePageState extends State<ProfilePage> {
   String _userAge = "25";
   String _userGender = "Male";
   String _userBloodGroup = "A+";
-  String _userPhone = "1234567890";
+  String _userPhone = "8902345678";
   String _profilePicture =
       "https://png.pngtree.com/png-clipart/20231019/original/pngtree-user-profile-avatar-png-image_13369991.png";
-  String _location = "Location not set";
+  String _location = "Bangalore";
   bool _isAvailableForDonation = true;
   bool _isLoading = true; // To show a loading indicator
-  int _donatedCount = 0;
+  int _donatedCount = 2;
   int _requestedCount = 0;
 
   @override
@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (userData != null) {
         
-      final userDav = await fetchUserProfile("67e99111eb32dbea224507ab");
+      final userDav = await fetchUserProfile(jsonDecode(userData)['_id']);
       print(userDav);
         Map<String, dynamic> user = jsonDecode(userData);
         print(userData);

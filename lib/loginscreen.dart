@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_toastify/components/enums.dart';
 import 'package:flutter_toastify/flutter_toastify.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';

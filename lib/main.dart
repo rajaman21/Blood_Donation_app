@@ -13,9 +13,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure plugin services are initialized
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // Check and request location permission
   if (await Permission.locationWhenInUse.isDenied) {
     await Permission.locationWhenInUse.request();
   }
@@ -150,7 +149,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 DotsIndicator(
                   dotsCount: _pages.length,
                   position: _currentIndex.toDouble(),
-                  decorator: DotsDecorator(
+                  decorator: const DotsDecorator(
                     activeColor: Colors.red,
                   ),
                 ),

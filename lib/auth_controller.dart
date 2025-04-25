@@ -20,7 +20,6 @@ class AuthController {
     String email = emailController.text;
     String phone = phoneController.text;
     String bloodGroup = bloodGroupController.text;
-    String password = passwordController.text;
 
     // Add API call logic here
     debugPrint('Registering User: $name, $email, $phone, $bloodGroup');
