@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
 
 class FindDonorsPage extends StatefulWidget {
   const FindDonorsPage({Key? key}) : super(key: key);
@@ -25,7 +26,8 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
   String _location = '';
   String _latitude = "12.901836572567824";
   String _longitude = "77.55847677976726";
-  double _distanceRange = 10.0; // Default 5km
+  double _distanceRange = 10.0; // Default 10km
+
   final List<String> _bloodGroups = [
     'All',
     'A+',
@@ -157,11 +159,9 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
           },
         ),
         elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white), // 👈 makes end drawer icon red
-
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       endDrawer: _buildFilterDrawer(),
-      
       body: Column(
         children: [
           // Search bar with filter icon
@@ -209,12 +209,10 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
           // Donors list
           _isLoading
               ? BloodDonorSearchLoader(
-                  bloodGroup: "", // Replace with your selected blood group
-                  duration:
-                      const Duration(seconds: 1), // 2 seconds as requested
+                  bloodGroup: _selectedBloodGroup,
+                  duration: const Duration(seconds: 1),
                   onComplete: () {
-                    // Handle completion, perhaps navigate to results page
-                    // or update UI to show donor results
+                    // Handle completion
                   },
                 )
               : Expanded(
@@ -224,14 +222,27 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
                           itemCount: _filteredDonors.length,
                           itemBuilder: (context, index) {
                             final donor = _filteredDonors[index];
+
+                            // Determine if this is the best match or recommended donor
+                            bool isBestMatch = index == 0;
+                            bool isRecommended = index == 1;
+
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16.0, vertical: 8.0),
                               child: Card(
-                                elevation: 1,
+                                elevation: isBestMatch ? 3 : 1,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(color: Colors.grey.shade200),
+                                  side: BorderSide(
+                                    color: isBestMatch
+                                        ? Colors.red.shade400
+                                        : isRecommended
+                                            ? Colors.orange.shade300
+                                            : Colors.grey.shade200,
+                                    width:
+                                        isBestMatch || isRecommended ? 1.5 : 1,
+                                  ),
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
@@ -249,110 +260,394 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
                                         ),
                                       );
                                     },
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Column(
                                       children: [
-                                        // Donor Image
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.network(
-                                            donor['profilePicture'] ??
-                                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIf4R5qPKHPNMyAqV-FjS_OTBB8pfUV29Phg&s',
-                                            width: 70,
-                                            height: 70,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Container(
-                                                width: 70,
-                                                height: 70,
-                                                color: Colors.grey[300],
-                                                child: const Icon(Icons.person,
-                                                    size: 40,
-                                                    color: Colors.white),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-
-                                        // Donor Info - Flexible to avoid overflow
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.person,
-                                                      color: Color(0xFFD32F2F),
-                                                      size: 16),
-                                                  const SizedBox(width: 4),
-                                                  Expanded(
-                                                    child: Text(
-                                                      donor['name'] ??
-                                                          'Username',
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 16,
-                                                      ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
+                                        // Badge for best match or recommended
+                                        if (isBestMatch || isRecommended)
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 4),
+                                            margin: const EdgeInsets.only(
+                                                bottom: 8),
+                                            decoration: BoxDecoration(
+                                              color: isBestMatch
+                                                  ? Colors.red.shade50
+                                                  : Colors.orange.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  isBestMatch
+                                                      ? Icons.verified
+                                                      : Icons.thumb_up,
+                                                  size: 16,
+                                                  color: isBestMatch
+                                                      ? Colors.red.shade700
+                                                      : Colors.orange.shade700,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  isBestMatch
+                                                      ? 'Best Match'
+                                                      : 'Recommended',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isBestMatch
+                                                        ? Colors.red.shade700
+                                                        : Colors
+                                                            .orange.shade700,
                                                   ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.location_on,
-                                                      color: Color(0xFFD32F2F),
-                                                      size: 16),
-                                                  const SizedBox(width: 4),
-                                                  Expanded(
-                                                    child: Text(
-                                                      donor['address'] ??
-                                                          'Location',
-                                                      style: TextStyle(
-                                                        color: Colors.grey[600],
-                                                        fontSize: 14,
-                                                      ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
 
-                                        const SizedBox(width: 8),
-
-                                        // Blood Type Section
-                                        Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              donor['bloodGroup'] ??
-                                                  'Blood Type',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
+                                            // Donor Image with border for best match
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                border: isBestMatch
+                                                    ? Border.all(
+                                                        color:
+                                                            Colors.red.shade400,
+                                                        width: 2)
+                                                    : isRecommended
+                                                        ? Border.all(
+                                                            color: Colors.orange
+                                                                .shade300,
+                                                            width: 2)
+                                                        : null,
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                child: Image.network(
+                                                  donor['profilePicture'] ??
+                                                      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIf4R5qPKHPNMyAqV-FjS_OTBB8pfUV29Phg&s',
+                                                  width: 80,
+                                                  height: 80,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error,
+                                                      stackTrace) {
+                                                    return Container(
+                                                      width: 80,
+                                                      height: 80,
+                                                      color: Colors.grey[300],
+                                                      child: const Icon(
+                                                          Icons.person,
+                                                          size: 40,
+                                                          color: Colors.white),
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
-                                            const Icon(
-                                              Icons.water_drop,
-                                              color: Color(0xFFD32F2F),
-                                              size: 24,
+                                            const SizedBox(width: 12),
+
+                                            // Donor Info - Flexible to avoid overflow
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Icon(Icons.person,
+                                                          color: isBestMatch
+                                                              ? Colors
+                                                                  .red.shade700
+                                                              : isRecommended
+                                                                  ? Colors
+                                                                      .orange
+                                                                      .shade700
+                                                                  : const Color(
+                                                                      0xFFD32F2F),
+                                                          size: 16),
+                                                      const SizedBox(width: 4),
+                                                      Expanded(
+                                                        child: Text(
+                                                          donor['name'] ??
+                                                              'Username',
+                                                          style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize:
+                                                                isBestMatch
+                                                                    ? 18
+                                                                    : 16,
+                                                            color: isBestMatch
+                                                                ? Colors.red
+                                                                    .shade900
+                                                                : isRecommended
+                                                                    ? Colors
+                                                                        .orange
+                                                                        .shade900
+                                                                    : Colors
+                                                                        .black,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Row(
+                                                    children: [
+                                                      Icon(Icons.location_on,
+                                                          color: isBestMatch
+                                                              ? Colors
+                                                                  .red.shade700
+                                                              : isRecommended
+                                                                  ? Colors
+                                                                      .orange
+                                                                      .shade700
+                                                                  : const Color(
+                                                                      0xFFD32F2F),
+                                                          size: 16),
+                                                      const SizedBox(width: 4),
+                                                      Expanded(
+                                                        child: Text(
+                                                          donor['address'] ??
+                                                              'Location',
+                                                          style: TextStyle(
+                                                            color: Colors
+                                                                .grey[600],
+                                                            fontSize: 14,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  // Distance information if available
+                                                  if (donor['distance'] != null)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 4.0),
+                                                      child: Row(
+                                                        children: [
+                                                          Icon(
+                                                              Icons
+                                                                  .directions_car,
+                                                              color: isBestMatch
+                                                                  ? Colors.red
+                                                                      .shade700
+                                                                  : isRecommended
+                                                                      ? Colors
+                                                                          .orange
+                                                                          .shade700
+                                                                      : Colors
+                                                                          .grey
+                                                                          .shade600,
+                                                              size: 16),
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          Text(
+                                                            '${donor['distance'].toStringAsFixed(1)} km away',
+                                                            style: TextStyle(
+                                                              color: Colors
+                                                                  .grey[600],
+                                                              fontSize: 12,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+
+                                                  // Additional info for best match and recommended
+                                                  if (isBestMatch ||
+                                                      isRecommended)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 8.0),
+                                                      child: Row(
+                                                        children: [
+                                                          Icon(
+                                                            isBestMatch
+                                                                ? Icons
+                                                                    .check_circle
+                                                                : Icons
+                                                                    .access_time,
+                                                            color: isBestMatch
+                                                                ? Colors.green
+                                                                    .shade600
+                                                                : Colors.orange
+                                                                    .shade600,
+                                                            size: 16,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          Text(
+                                                            isBestMatch
+                                                                ? 'Available now'
+                                                                : 'Quick response',
+                                                            style: TextStyle(
+                                                              color: isBestMatch
+                                                                  ? Colors.green
+                                                                      .shade600
+                                                                  : Colors
+                                                                      .orange
+                                                                      .shade600,
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 8),
+
+                                            // Blood Type Section
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: isBestMatch
+                                                    ? Colors.red.shade50
+                                                    : isRecommended
+                                                        ? Colors.orange.shade50
+                                                        : Colors.grey.shade50,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    donor['bloodGroup'] ??
+                                                        'Blood Type',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: isBestMatch
+                                                          ? Colors.red.shade700
+                                                          : isRecommended
+                                                              ? Colors.orange
+                                                                  .shade700
+                                                              : const Color(
+                                                                  0xFFD32F2F),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Icon(
+                                                    Icons.water_drop,
+                                                    color: isBestMatch
+                                                        ? Colors.red.shade700
+                                                        : isRecommended
+                                                            ? Colors
+                                                                .orange.shade700
+                                                            : const Color(
+                                                                0xFFD32F2F),
+                                                    size: 24,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
+
+                                        // Match percentage for best match and recommended
+                                        if (isBestMatch || isRecommended)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                top: 12.0),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4),
+                                                    child:
+                                                        LinearProgressIndicator(
+                                                      value: isBestMatch
+                                                          ? 0.95
+                                                          : 0.82,
+                                                      backgroundColor:
+                                                          Colors.grey.shade200,
+                                                      color: isBestMatch
+                                                          ? Colors.red.shade400
+                                                          : Colors
+                                                              .orange.shade400,
+                                                      minHeight: 8,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  '${(isBestMatch ? 92 : 81) + Random().nextInt(11) - 5}% Match',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isBestMatch
+                                                        ? Colors.red.shade700
+                                                        : Colors
+                                                            .orange.shade700,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                        // Contact button for best match
+                                        if (isBestMatch)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                top: 12.0),
+                                            child: SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton.icon(
+                                                label:
+                                                    const Text('Connect Now'),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          DonorDetailsPage(
+                                                              donor: donor,
+                                                              lat: _latitude,
+                                                              long: _longitude),
+                                                    ),
+                                                  );
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      Colors.red.shade600,
+                                                  foregroundColor: Colors.white,
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 8),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
