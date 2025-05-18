@@ -85,7 +85,7 @@ class _FindDonorsPageState extends State<FindDonorsPage> {
           'https://blood-donation-backend-082i.onrender.com/api/home/default-donors';
 
       final Map<String, dynamic> body = {
-        if (bloodGroup != null && bloodGroup != "All") "bloodGroup": bloodGroup,
+        if (bloodGroup != null) "bloodGroup": bloodGroup,
         if (distance != null) "distance": distance,
         if (lat != null) "lat": lat,
         if (lng != null) "lng": lng,
