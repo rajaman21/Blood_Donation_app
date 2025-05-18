@@ -10,6 +10,7 @@ import 'profile_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_toastify/flutter_toastify.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-    String _userName = "User Name";
+  String _userName = "User Name";
   String _userEmail = "user@example.com";
   String _profilePicture =
       "https://www.pngkey.com/png/detail/114-1149878_setting-user-avatar-in-specific-size-without-breaking.png";
@@ -72,7 +73,7 @@ class _HomePageState extends State<HomePage> {
         ),
         elevation: 0,
       ),
-      drawer: _buildDrawer(context,_userName,_userEmail,_profilePicture),
+      drawer: _buildDrawer(context, _userName, _userEmail, _profilePicture),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,11 +181,10 @@ class _HomePageState extends State<HomePage> {
                     icon: Icons.bloodtype,
                     title: 'Order Bloods',
                     onTap: () {
-                       Navigator.push(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) =>
-                                const BloodRequestScreen()),
+                            builder: (context) => const BloodRequestScreen()),
                       );
                     },
                   ),
@@ -245,6 +245,14 @@ class _HomePageState extends State<HomePage> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 3, // Show only 3 items in the home page
               itemBuilder: (context, index) {
+                // Real names instead of "Username"
+                final List<String> donorNames = [
+                  'Ankit Singh',
+                  'Aman',
+                  'Priya Patel'
+                ];
+                final List<String> bloodTypes = ['A+', 'B-', 'O+'];
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 8.0),
@@ -256,21 +264,91 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: ListTile(
                       leading: const CircleAvatar(
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Color(0xFFD32F2F),
                         child: Icon(Icons.person, color: Colors.white),
                       ),
-                      title: const Text('Name'),
+                      title: Text(
+                        donorNames[index],
+                        style: GoogleFonts.nunitoSans(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       subtitle: Text(
-                          'Requested ${index + 1} hour${index == 0 ? '' : 's'} ago'),
+                        'Requested ${index + 1} hour${index == 0 ? '' : 's'} ago',
+                        style: GoogleFonts.nunitoSans(),
+                      ),
                       trailing: Text(
-                        ['A+', 'B-', 'O+'][index],
+                        bloodTypes[index],
                         style: GoogleFonts.nunitoSans(
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFD32F2F),
+                          fontSize: 16,
                         ),
                       ),
                       onTap: () {
-                        // View donation request details
+                        // Show accept/reject dialog when tapped
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              title: Text(
+                                'Donation Request',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.nunitoSans(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              content: Text(
+                                'Do you want to accept ${donorNames[index]}\'s blood donation request for ${bloodTypes[index]}?',
+                                style: GoogleFonts.nunitoSans(),
+                                textAlign: TextAlign.center,
+                              ),
+                              actionsAlignment: MainAxisAlignment.center,
+                              actions: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Handle accept logic here
+                                    Navigator.of(context).pop();
+                                    FlutterToastify.success(description: const Text("Request accepted!")).show(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFFD32F2F),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Accept',
+                                    style: GoogleFonts.nunitoSans(
+                                        color: Colors.white),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Handle reject logic here
+                                    Navigator.of(context).pop();
+                                    FlutterToastify.error(description: const Text("Request rejected!")).show(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Reject',
+                                    style: GoogleFonts.nunitoSans(
+                                        color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                     ),
                   ),
@@ -408,7 +486,8 @@ class _HomePageState extends State<HomePage> {
 //   );
 // }
 
-Widget _buildDrawer(BuildContext context, String userName, String userEmail, String profilePicture) {
+Widget _buildDrawer(BuildContext context, String userName, String userEmail,
+    String profilePicture) {
   return Drawer(
     child: ListView(
       padding: EdgeInsets.zero,
@@ -420,8 +499,8 @@ Widget _buildDrawer(BuildContext context, String userName, String userEmail, Str
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundImage: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSppkoKsaYMuIoNLDH7O8ePOacLPG1mKXtEng&s"),
-
+                backgroundImage: NetworkImage(
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSppkoKsaYMuIoNLDH7O8ePOacLPG1mKXtEng&s"),
               ),
               const SizedBox(height: 10),
               Text(
@@ -453,8 +532,7 @@ Widget _buildDrawer(BuildContext context, String userName, String userEmail, Str
           Navigator.pop(context);
           Navigator.push(
             context,
-            MaterialPageRoute(
-                builder: (context) => const BloodRequestScreen()),
+            MaterialPageRoute(builder: (context) => const BloodRequestScreen()),
           );
         }),
         _buildDrawerItem(context, Icons.request_page, 'Donation Request', () {
@@ -502,9 +580,10 @@ Widget _buildDrawer(BuildContext context, String userName, String userEmail, Str
                 actionsAlignment: MainAxisAlignment.center,
                 actions: [
                   ElevatedButton(
-                    onPressed: ()async {
+                    onPressed: () async {
                       Navigator.of(context).pop(); // Close dialog
-                      SharedPreferences prefs = await SharedPreferences.getInstance();
+                      SharedPreferences prefs =
+                          await SharedPreferences.getInstance();
                       await prefs.setBool("isSignedIn", false);
                       await prefs.remove("userData"); // Clear user data
 
