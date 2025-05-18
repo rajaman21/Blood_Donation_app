@@ -1,4 +1,4 @@
-import 'package:donor_mate/donation_req.dart';
+import 'package:donor_mate/blood_req.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
@@ -207,7 +207,7 @@ class DonorDetailsPage extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const CreateDonationRequestScreen(),
+                                    const BloodRequestScreen(),
                               ),
                             );
                           },
